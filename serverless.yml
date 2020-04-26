@@ -1,0 +1,40 @@
+service:
+  name: homeet-slash-cmd
+
+custom:
+  webpack:
+    webpackConfig: ./webpack.config.js
+    includeModules: true
+
+plugins:
+  - serverless-webpack
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  region: ap-northeast-1
+  timeout: 30
+  apiGateway:
+    minimumCompressionSize: 1024
+  environment:
+    AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
+
+functions:
+  auth:
+    handler: handler.auth
+    events:
+      - http:
+          method: get
+          path: auth
+  callback:
+    handler: handler.callback
+    events:
+      - http:
+          method: get
+          path: callback
+  create:
+    handler: handler.create
+    events:
+      - http:
+          method: post
+          path: create
