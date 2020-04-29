@@ -1,4 +1,6 @@
 import * as qs from 'query-string'
+import * as https from 'https'
+import * as url from 'url'
 import {
   SlackUser,
   MessageBlock,
@@ -23,6 +25,11 @@ export const extractUser = (payload: string): SlackUser => {
     id: data.user_id,
     team: data.team_id,
   }
+}
+
+export const extractResponseUrl = (payload: string): string => {
+  const { response_url }: any = qs.parse(payload)
+  return response_url
 }
 
 type Scope = 'everyone' | 'me'
@@ -58,4 +65,42 @@ export const createMessage = (
     blocks: markdown.map(createBlock),
     response_type: convertToResponseType(scope),
   }
+}
+
+export const replaceMessage = (resUrl: string, text: string) => {
+  const data = JSON.stringify({
+    response_type: 'in_channel',
+    replace_original: true,
+    text,
+  })
+
+  const parsedUrl = url.parse(resUrl)
+  const options = {
+    hostname: parsedUrl.hostname,
+    port: 443,
+    path: parsedUrl.path,
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Content-Length': data.length,
+    },
+  }
+
+  const req = https.request(options, (res) => {
+    console.log(`statusCode: ${res.statusCode}`)
+    let buf = ''
+    res.on('data', (d) => {
+      buf += d.toString()
+    })
+    res.on('end', () => {
+      console.log(buf)
+    })
+  })
+
+  req.on('error', (error) => {
+    console.error(error)
+  })
+
+  req.write(data)
+  req.end()
 }
