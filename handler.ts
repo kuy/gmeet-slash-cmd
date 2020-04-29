@@ -10,19 +10,18 @@ import {
   prepareForAuth,
   verifyAuth,
   extractSetupFromState,
+  getAuthUser,
 } from './auth'
+import { createEvent } from './calendar'
 
 export const create: APIGatewayProxyHandler = async (event) => {
   console.log(event.body)
-
   const user = slack.extractUser(event.body)
-  console.log(JSON.stringify(user))
-
   if (await readyToUse(user)) {
-    const url = 'https://meet.google.com'
+    const url = await createEvent(await getAuthUser(user))
     return {
       statusCode: 200,
-      body: JSON.stringify(slack.createMessage(`<${url}|Start Hangouts Meet>`)),
+      body: JSON.stringify(slack.createMessage(`<${url}|Open Hangouts Meet>`)),
     }
   } else {
     const setup = await prepareForAuth(user)
@@ -40,10 +39,8 @@ export const auth: APIGatewayProxyHandler = async (event) => {
   console.log(JSON.stringify(event.queryStringParameters))
   const user = slack.createUser(event.queryStringParameters)
   const { setup } = event.queryStringParameters
-
   if (await verifyAuth(user, setup)) {
     const url = generateAuthUrl(user, setup)
-    console.log(url)
     await prepareForCallback(user, setup)
     return {
       statusCode: 301,
@@ -61,7 +58,6 @@ export const auth: APIGatewayProxyHandler = async (event) => {
 }
 
 export const callback: APIGatewayProxyHandler = async (event) => {
-  console.log(JSON.stringify(event, null, 2))
   const { code, state } = event.queryStringParameters
   const user = slack.createUserFromState(state)
   const setup = extractSetupFromState(state)

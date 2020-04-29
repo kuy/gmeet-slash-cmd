@@ -3,6 +3,10 @@ export type SlackUser = {
   id: string
 }
 
+export type AuthUser = SlackUser & {
+  tokens: any
+}
+
 export type MessageBlock = {
   type: 'section'
   text: {

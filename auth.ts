@@ -1,22 +1,26 @@
 import { google } from 'googleapis'
 import { v4 as uuidv4 } from 'uuid'
 import { read, write } from './storage'
-import { SlackUser, PersistedAuthState } from './types'
+import { AuthUser, SlackUser, PersistedAuthState } from './types'
 
 const SCOPES = ['https://www.googleapis.com/auth/calendar.events']
 
-const createOAuthClient = () => {
-  return new google.auth.OAuth2(
+export const createOAuthClient = (tokens?: any) => {
+  const client = new google.auth.OAuth2(
     process.env.CLIENT_ID,
     process.env.CLIENT_SECRET,
     process.env.REDIRECT_URL
   )
+  if (tokens) {
+    client.setCredentials(tokens)
+  }
+  return client
 }
 
 export const generateAuthUrl = (user: SlackUser, setup: string): string => {
   const client = createOAuthClient()
   return client.generateAuthUrl({
-    access_type: 'online',
+    access_type: 'offline',
     scope: SCOPES,
     state: JSON.stringify({ ...user, setup }),
   })
@@ -42,9 +46,25 @@ const writeAuthState = async (
   return await write(key, JSON.stringify(state))
 }
 
+export const getAuthUser = async (user: SlackUser): Promise<AuthUser> => {
+  const state = await readAuthState(user)
+  if (state && state.status === 'done' && state.tokens) {
+    return {
+      team: state.team,
+      id: state.id,
+      tokens: state.tokens,
+    }
+  } else {
+    const ser = JSON.stringify(state)
+    throw new Error(
+      `Persisted state doesn't contain tokens or unexpected state.\n${ser}`
+    )
+  }
+}
+
 export const readyToUse = async (user: SlackUser): Promise<boolean> => {
   const state = await readAuthState(user)
-  return state && state.status === 'done'
+  return state && state.status === 'done' && state.tokens
 }
 
 export const prepareForAuth = async (user: SlackUser) => {
