@@ -9,6 +9,7 @@ export const write = async (key: string, data: string): Promise<boolean> => {
     await s3.putObject({ Bucket: BUCKET_NAME, Key: key, Body: data }).promise()
     return true
   } catch (e) {
+    console.error(`storage.write: ${key}`, e)
     return false
   }
 }
@@ -18,6 +19,7 @@ export const read = async (key: string): Promise<AWS.S3.Body | null> => {
     const data = await s3.getObject({ Bucket: BUCKET_NAME, Key: key }).promise()
     return data.Body
   } catch (e) {
+    console.error(`storage.write: ${key}`, e)
     return null
   }
 }

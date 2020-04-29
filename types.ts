@@ -22,8 +22,14 @@ type CommonAuthState = {
   team: string
 }
 
-export type WaitingCallback = CommonAuthState & {
+export type BeforeAuth = CommonAuthState & {
+  status: 'auth'
+  setup: string
+}
+
+export type BeforeCallback = CommonAuthState & {
   status: 'callback'
+  setup: string
 }
 
 export type HasToken = CommonAuthState & {
@@ -31,4 +37,4 @@ export type HasToken = CommonAuthState & {
   tokens: any
 }
 
-export type PersistedAuthState = WaitingCallback | HasToken
+export type PersistedAuthState = BeforeAuth | BeforeCallback | HasToken

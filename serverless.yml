@@ -18,6 +18,9 @@ provider:
     minimumCompressionSize: 1024
   environment:
     AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
+    CLIENT_ID: ${file(./config.json):clientId}
+    CLIENT_SECRET: ${file(./config.json):clientSecret}
+    REDIRECT_URL: ${file(./config.json):redirectUrl}
 
 functions:
   auth:

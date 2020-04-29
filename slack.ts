@@ -6,8 +6,8 @@ export const createUser = (params: QueryParams): SlackUser => {
   return { id, team }
 }
 
-export const createUserFromQueryString = (raw: string): SlackUser => {
-  const { id, team } = qs.parse(raw)
+export const createUserFromState = (state: string): SlackUser => {
+  const { id, team } = JSON.parse(state)
   return createUser({ id, team })
 }
 

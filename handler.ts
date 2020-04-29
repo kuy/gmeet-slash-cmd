@@ -6,7 +6,10 @@ import {
   prepareForCallback,
   generateAuthUrl,
   verifyCallback,
-  storeAccessToken,
+  prepareForUse,
+  prepareForAuth,
+  verifyAuth,
+  extractSetupFromState,
 } from './auth'
 
 export const create: APIGatewayProxyHandler = async (event) => {
@@ -22,8 +25,8 @@ export const create: APIGatewayProxyHandler = async (event) => {
       body: JSON.stringify(slack.createMessage(`<${url}|Start Hangouts Meet>`)),
     }
   } else {
-    // TODO: Should remember this process for security?
-    const url = `https://homeet-slash-cmd.initial.inc/auth?id=${user.id}&team=${user.team}`
+    const setup = await prepareForAuth(user)
+    const url = `https://homeet-slash-cmd.initial.inc/auth?id=${user.id}&team=${user.team}&setup=${setup}`
     return {
       statusCode: 200,
       body: JSON.stringify(
@@ -36,27 +39,35 @@ export const create: APIGatewayProxyHandler = async (event) => {
 export const auth: APIGatewayProxyHandler = async (event) => {
   console.log(JSON.stringify(event.queryStringParameters))
   const user = slack.createUser(event.queryStringParameters)
+  const { setup } = event.queryStringParameters
 
-  const url = generateAuthUrl(user)
-  console.log(url)
-
-  await prepareForCallback(user)
-
-  return {
-    statusCode: 301,
-    headers: {
-      Location: url,
-    },
-    body: '',
+  if (await verifyAuth(user, setup)) {
+    const url = generateAuthUrl(user, setup)
+    console.log(url)
+    await prepareForCallback(user, setup)
+    return {
+      statusCode: 301,
+      headers: {
+        Location: url,
+      },
+      body: '',
+    }
+  } else {
+    return {
+      statusCode: 200,
+      body: 'Failed to verify auth',
+    }
   }
 }
 
 export const callback: APIGatewayProxyHandler = async (event) => {
   console.log(JSON.stringify(event, null, 2))
   const { code, state } = event.queryStringParameters
-  const user = slack.createUserFromQueryString(state)
-  if (await verifyCallback(user)) {
-    await storeAccessToken(user, code)
+  const user = slack.createUserFromState(state)
+  const setup = extractSetupFromState(state)
+  console.log(user, setup)
+  if (await verifyCallback(user, setup)) {
+    await prepareForUse(user, code)
     return {
       statusCode: 200,
       body: 'Done',
@@ -64,7 +75,7 @@ export const callback: APIGatewayProxyHandler = async (event) => {
   } else {
     return {
       statusCode: 200,
-      body: 'Failed to verify callback.',
+      body: 'Failed to verify callback',
     }
   }
 }
