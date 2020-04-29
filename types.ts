@@ -15,8 +15,11 @@ export type MessageBlock = {
   }
 }
 
+export type ResponseType = 'in_channel' | 'ephemeral'
+
 export type SlackMessage = {
   blocks: MessageBlock[]
+  response_type: ResponseType
 }
 
 export type QueryParams = { [name: string]: any }
