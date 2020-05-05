@@ -8,3 +8,4 @@ jspm_packages
 # Webpack directories
 .webpack
 config.json
+config.json.*
