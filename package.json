@@ -7,7 +7,7 @@
   "publish": false,
   "main": "handler.js",
   "dependencies": {
-    "aws-sdk": "^2.668.0",
+    "aws-sdk": "^2.814.0",
     "googleapis": "^49.0.0",
     "query-string": "^6.12.1",
     "source-map-support": "^0.5.19",
